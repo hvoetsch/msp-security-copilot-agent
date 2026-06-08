@@ -1,0 +1,48 @@
+{
+  "schema_version": "v2.4",
+  "name_for_human": "MSP Security Portal",
+  "namespace": "mspSecurity",
+  "description_for_human": "Security findings, scores and reports for managed M365 tenants.",
+  "description_for_model": "Retrieves security findings, overall status, score summaries and suspicious sign-in reports for managed Microsoft 365 customer tenants. Use getTenants first to resolve a customer name to a tenantId, then call detail endpoints.",
+  "functions": [
+    {
+      "name": "getSecurityOverview",
+      "description": "Returns security overview for ALL managed tenants: name, critical/high finding counts, secure score and last scan time."
+    },
+    {
+      "name": "getTenants",
+      "description": "Returns the list of managed customer tenants with IDs and names. Call this first to resolve a customer name to a tenantId."
+    },
+    {
+      "name": "getFindings",
+      "description": "Returns security findings for a specific tenant. Filter by severity (Critical, High, Medium, Low) or category."
+    },
+    {
+      "name": "getReportSummary",
+      "description": "Returns the executive security report summary for a tenant: score trend, top risks, resolved findings and recommended actions."
+    },
+    {
+      "name": "getSuspiciousSignins",
+      "description": "Returns suspicious sign-in events for a tenant: unusual locations, failed logins, BEC indicators."
+    }
+  ],
+  "runtimes": [
+    {
+      "type": "OpenApi",
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "<YOUR_OAUTH_CLIENT_REGISTRATION_REFERENCE_ID>"
+      },
+      "spec": {
+        "url": "openapi.json"
+      },
+      "run_for_functions": [
+        "getSecurityOverview",
+        "getTenants",
+        "getFindings",
+        "getReportSummary",
+        "getSuspiciousSignins"
+      ]
+    }
+  ]
+}

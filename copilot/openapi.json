@@ -1,0 +1,276 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MSP Security Portal API",
+    "description": "Security findings, scores and reports for managed Microsoft 365 customer tenants.\nUsed by the MSP Security Copilot Declarative Agent.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Your Company",
+      "url": "https://your-portal-domain.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://your-portal-domain.com",
+      "description": "MSP Security Portal (Production)"
+    }
+  ],
+  "security": [
+    {
+      "msEntraAuth": [
+        "api://<YOUR_APP_ID>/access_as_user"
+      ]
+    }
+  ],
+  "paths": {
+    "/api/overview": {
+      "get": {
+        "operationId": "getSecurityOverview",
+        "summary": "Security overview for all managed tenants",
+        "description": "Returns a summary for every managed M365 tenant including:\ncritical/high finding counts, secure score, last scan time and overall status.\nUse this to answer questions about which customers have the most problems\nor the overall fleet security posture.\n",
+        "tags": ["Overview"],
+        "responses": {
+          "200": {
+            "description": "List of tenant security summaries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TenantSummary" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized — valid Entra bearer token required" }
+        }
+      }
+    },
+    "/api/tenants": {
+      "get": {
+        "operationId": "getTenants",
+        "summary": "List all managed customer tenants",
+        "description": "Returns the full list of managed customer tenants with their internal IDs.\nAlways call this first to resolve a customer name to a tenantId\nbefore calling any tenant-specific endpoint.\n",
+        "tags": ["Tenants"],
+        "responses": {
+          "200": {
+            "description": "List of tenants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TenantBasic" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/tenants/{tenantId}/findings": {
+      "get": {
+        "operationId": "getFindings",
+        "summary": "Security findings for a specific tenant",
+        "description": "Returns all security findings for the specified tenant.\nOptionally filter by severity or category.\n",
+        "tags": ["Findings"],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "description": "Internal tenant UUID (obtain from getTenants)",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "description": "Filter by severity level",
+            "schema": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by category (e.g. Identity, Email, Device, ConditionalAccess)",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of findings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Finding" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/tenants/{tenantId}/reports/summary": {
+      "get": {
+        "operationId": "getReportSummary",
+        "summary": "Executive security report summary for a tenant",
+        "description": "Returns the executive security summary including score trend, key risks, resolved findings and recommended actions.\n",
+        "tags": ["Reports"],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "description": "Internal tenant UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Executive report summary",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReportSummary" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/tenants/{tenantId}/forensic/suspicious-signins": {
+      "get": {
+        "operationId": "getSuspiciousSignins",
+        "summary": "Suspicious sign-in events for a tenant",
+        "description": "Returns suspicious and anomalous sign-in events including failed logins from unusual countries, blocked accounts, potential BEC indicators, and high-risk sign-ins.\n",
+        "tags": ["Forensic"],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "description": "Internal tenant UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of suspicious sign-in events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SuspiciousSignin" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "msEntraAuth": {
+        "type": "oauth2",
+        "description": "Microsoft Entra ID — delegated user auth via access_as_user scope",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/token",
+            "refreshUrl": "https://login.microsoftonline.com/<YOUR_TENANT_ID>/oauth2/v2.0/token",
+            "scopes": {
+              "api://<YOUR_APP_ID>/access_as_user": "Access MSP Security Portal as signed-in user"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "TenantSummary": {
+        "type": "object",
+        "description": "Security summary for a single managed tenant",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "description": "Customer display name" },
+          "plan": { "type": "string" },
+          "consentGranted": { "type": "boolean" },
+          "lastScanAt": { "type": "string", "format": "date-time", "nullable": true },
+          "criticalFindings": { "type": "integer" },
+          "highFindings": { "type": "integer" },
+          "totalFindings": { "type": "integer" },
+          "secureScore": { "type": "integer" },
+          "secureScoreMax": { "type": "integer" },
+          "scorePercent": { "type": "integer" },
+          "overallStatus": { "type": "string", "enum": ["Critical", "Warning", "Good"] },
+          "serviceLevel": { "type": "string", "enum": ["Minimum", "Standard", "Enhanced"] }
+        }
+      },
+      "TenantBasic": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "plan": { "type": "string" },
+          "lastScanAt": { "type": "string", "format": "date-time", "nullable": true },
+          "scanStatus": { "type": "string", "enum": ["idle", "running", "ok", "error"] },
+          "serviceLevel": { "type": "string", "enum": ["Minimum", "Standard", "Enhanced"] }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "tenantId": { "type": "string", "format": "uuid" },
+          "severity": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+          "category": { "type": "string" },
+          "control": { "type": "string" },
+          "status": { "type": "string", "enum": ["Passed", "Failed"] },
+          "userStatus": { "type": "string", "enum": ["Open", "InProgress", "AcceptedRisk", "Resolved"] },
+          "affected": { "type": "string" },
+          "summary": { "type": "string" },
+          "risk": { "type": "string" },
+          "recommendation": { "type": "string" },
+          "fixSteps": { "type": "string", "nullable": true },
+          "cisControl": { "type": "string", "nullable": true },
+          "checkedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ReportSummary": {
+        "type": "object",
+        "properties": {
+          "tenantName": { "type": "string" },
+          "scoreCurrentMonth": { "type": "integer" },
+          "scorePreviousMonth": { "type": "integer" },
+          "scoreDelta": { "type": "integer" },
+          "totalOpenFindings": { "type": "integer" },
+          "criticalCount": { "type": "integer" },
+          "highCount": { "type": "integer" },
+          "resolvedThisMonth": { "type": "integer" },
+          "topRisks": { "type": "array", "items": { "type": "string" } },
+          "recommendedActions": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "SuspiciousSignin": {
+        "type": "object",
+        "properties": {
+          "userPrincipalName": { "type": "string" },
+          "displayName": { "type": "string" },
+          "ipAddress": { "type": "string" },
+          "country": { "type": "string" },
+          "city": { "type": "string" },
+          "appDisplayName": { "type": "string" },
+          "signInTime": { "type": "string", "format": "date-time" },
+          "riskLevel": { "type": "string", "enum": ["none", "low", "medium", "high"] },
+          "riskDetail": { "type": "string" },
+          "errorCode": { "type": "integer" },
+          "isSuspicious": { "type": "boolean" },
+          "suspicionReason": { "type": "string" }
+        }
+      }
+    }
+  }
+}

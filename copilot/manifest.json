@@ -1,0 +1,33 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.19",
+  "version": "1.0.0",
+  "id": "<YOUR_TEAMS_APP_ID>",
+  "developer": {
+    "name": "Your Company",
+    "websiteUrl": "https://your-portal-domain.com",
+    "privacyUrl": "https://your-portal-domain.com/privacy",
+    "termsOfUseUrl": "https://your-portal-domain.com/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "MSP Security",
+    "full": "MSP Security Copilot Agent"
+  },
+  "description": {
+    "short": "Security status for managed M365 tenants",
+    "full": "Security findings, scores and reports for all managed Microsoft 365 customer tenants."
+  },
+  "accentColor": "#0F6CBD",
+  "copilotAgents": {
+    "declarativeAgents": [
+      {
+        "id": "mspSecurityAgent",
+        "file": "declarativeAgent.json"
+      }
+    ]
+  }
+}
