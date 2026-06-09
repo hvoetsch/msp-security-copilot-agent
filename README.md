@@ -4,6 +4,12 @@
 
 A Microsoft 365 Copilot Declarative Agent that gives MSP (Managed Service Provider) IT teams instant, natural-language access to the security status of all their managed Microsoft 365 customer tenants — directly from Teams chat.
 
+## Demo
+
+[![MSP Security Copilot Agent Demo](https://vumbnail.com/1199668164.jpg)](https://vimeo.com/1199668164)
+
+▶️ [Watch on Vimeo](https://vimeo.com/1199668164)
+
 ---
 
 ## The Problem
