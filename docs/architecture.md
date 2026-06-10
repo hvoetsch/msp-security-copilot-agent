@@ -6,10 +6,14 @@
 flowchart TD
     User["👤 MSP Technician\n(Teams Desktop)"]
 
-    subgraph M365["Microsoft 365 Copilot"]
+    subgraph M365["Microsoft 365 Copilot (Work IQ Orchestrator)"]
         Agent["🤖 MSP Security\nDeclarative Agent\n(declarativeAgent.json v1.7)"]
         Plugin["🔌 API Plugin\n(plugin.json v2.4)"]
         Vault["🔐 OAuthPluginVault\n(Teams Developer Portal\nOAuth Registration)"]
+    end
+
+    subgraph WorkIQ["Work IQ Knowledge (SharePoint)"]
+        SP["📚 Security Runbooks\nhttps://YOUR_TENANT.sharepoint.com\n/sites/SecurityRunbooks"]
     end
 
     subgraph EntraID["Microsoft Entra ID"]
@@ -40,6 +44,9 @@ flowchart TD
     Plugin -->|"Structured answer"| Agent
     Agent -->|"Natural language response"| User
 
+    Agent -->|"Knowledge search\n(remediation runbooks)"| SP
+    SP -->|"Remediation procedures"| Agent
+
     Scanner -->|"Reads security config\nvia delegated consent"| Tenants
     Scanner -->|"Stores findings & scores"| DB
 ```
@@ -48,7 +55,8 @@ flowchart TD
 
 | Component | Technology |
 |-----------|-----------|
-| Copilot Agent | Microsoft 365 Copilot Declarative Agent (manifest v1.19, agent v1.7) |
+| Copilot Agent | Microsoft 365 Copilot Declarative Agent (manifest v1.19, agent v1.7) — Work IQ Orchestrator |
+| Work IQ Knowledge | SharePoint `OneDriveAndSharePoint` capability — Security Runbooks grounding |
 | API Plugin | Teams API Plugin (schema v2.4, OpenAPI 3.0) |
 | Authentication | OAuthPluginVault → Microsoft Entra ID OAuth 2.0 (delegated) |
 | Backend API | ASP.NET Core 8, `AddMicrosoftIdentityWebApi` JWT validation |

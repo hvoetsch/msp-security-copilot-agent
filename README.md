@@ -30,6 +30,18 @@ The **MSP Security Copilot Agent** integrates Microsoft 365 Copilot with a custo
 | *"Show me critical identity findings for Contoso"* | Calls `getTenants` to resolve the name, then `getFindings?severity=Critical&category=Identity` |
 | *"Are there suspicious sign-ins at Fabrikam this week?"* | Calls `getSuspiciousSignins` → lists anomalous logins with location, risk level, BEC indicators |
 | *"Give me an executive report for Northwind"* | Calls `getReportSummary` → score trend, top risks, resolved findings, recommended actions |
+| *"How do I remediate the critical findings at Contoso?"* | Combines `getFindings` results with remediation runbooks retrieved via Work IQ (SharePoint knowledge) |
+
+---
+
+## Microsoft IQ Integration: Work IQ
+
+This agent is built on **Work IQ**, the intelligence layer of Microsoft 365 Copilot:
+
+- **Work IQ orchestration** — As a Declarative Agent, the project runs natively on the Microsoft 365 Copilot orchestrator, which uses Work IQ to ground responses in organizational context, resolve user intent, and chain API plugin calls.
+- **Work IQ knowledge (SharePoint)** — The agent uses the `OneDriveAndSharePoint` capability to access the MSP's internal Security Runbooks library. When a technician asks *"How do I fix this finding?"*, the agent combines the live finding from the Security Portal API with the matching remediation procedure from the MSP's own knowledge base — retrieved and ranked by Work IQ.
+
+This creates a closed loop: **detect (live API data) → understand (Work IQ reasoning) → remediate (Work IQ knowledge)**.
 
 ---
 
@@ -107,7 +119,17 @@ docs/
    - **Base URL**: `https://your-portal-domain.com`
 3. Copy the generated **reference_id**
 
-### Step 3 — Configure the copilot files
+### Step 3 — Work IQ: SharePoint Knowledge Source (optional)
+
+The agent uses the `OneDriveAndSharePoint` capability to ground remediation answers in your internal Security Runbooks library.
+
+1. Create a SharePoint site (e.g. `https://<YOUR_TENANT>.sharepoint.com/sites/SecurityRunbooks`) and populate it with remediation runbooks
+2. In `copilot/declarativeAgent.json`, replace `<YOUR_TENANT>` with your SharePoint tenant name
+3. Ensure Copilot has access to the site (site members or broader sharing)
+
+To skip this capability, remove the `capabilities` block from `declarativeAgent.json` — the agent will still work for live security queries.
+
+### Step 4 — Configure the copilot files
 
 Update placeholders in the files:
 
@@ -122,7 +144,7 @@ Update placeholders in the files:
 
 Host `openapi.json` publicly at `https://your-portal-domain.com/openapi.json`.
 
-### Step 4 — Package and deploy
+### Step 5 — Package and deploy
 
 ```bash
 zip -r msp-security-agent.zip manifest.json declarativeAgent.json plugin.json openapi.json color.png outline.png
@@ -144,6 +166,7 @@ Install in Teams and test via Microsoft 365 Copilot.
 - **Microsoft Graph API** — Multi-tenant security data collection
 - **Azure SQL** — Security findings and score history storage
 - **Azure VM + Nginx** — Hosting with TLS (Let's Encrypt)
+- **Work IQ** — Microsoft 365 Copilot intelligence layer: orchestration + SharePoint knowledge grounding (`OneDriveAndSharePoint` capability)
 
 ---
 
@@ -152,8 +175,8 @@ Install in Teams and test via Microsoft 365 Copilot.
 | Criterion | How this project addresses it |
 |-----------|-------------------------------|
 | **Accuracy & Relevance** | Live API data — no hallucination; all answers sourced directly from real tenant scans |
-| **Reasoning & Multi-step Thinking** | Agent resolves tenant names via `getTenants` before calling detail endpoints; chains calls intelligently |
-| **Creativity & Originality** | First-of-its-kind MSP security copilot: natural language across a multi-tenant security fleet |
+| **Reasoning & Multi-step Thinking** | Agent resolves tenant names via `getTenants` before calling detail endpoints; chains calls intelligently; combines live API findings with Work IQ knowledge to produce contextual remediation guidance |
+| **Creativity & Originality** | First-of-its-kind MSP security copilot: closed-loop detect → understand → remediate cycle powered by live API data and Work IQ knowledge grounding |
 | **User Experience** | Conversation starters, multilingual responses, structured findings sorted by severity |
 | **Reliability & Safety** | OAuth 2.0 delegated auth, JWT validation, no sensitive data in repo, production-hardened API |
 
